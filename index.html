@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Trick-or-Treat Street — Halloween Countdown</title>
+
+<style>
+  :root{
+    --navy: #08162a;
+    --midnight: #071226;
+    --ground: #050407;
+    --moon-core: #fff9e6;
+    --moon-edge: #ffd88a;
+    --accent: #ff8a18;
+    --warm: #ffcf6b;
+    --leaf: #12593a;
+    --muted: #9aa0a6;
+  }
+  /* Reset & base */
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:#eee;background:linear-gradient(180deg,var(--navy) 0%, #07122a 40%, var(--ground) 100%);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit}
+  /* Scene */
+  .scene{position:relative;min-height:100vh;overflow:hidden}
+  /* Controls */
+  .controls{position:fixed;left:12px;top:12px;z-index:120;display:flex;gap:8px;align-items:center;background:rgba(255,255,255,0.03);padding:8px;border-radius:10px;backdrop-filter:blur(6px);color:#ddd;font-size:13px}
+  .controls label{display:inline-flex;gap:8px;align-items:center;cursor:pointer}
+  .controls input[type=checkbox]{width:16px;height:16px}
+
+  /* Stars */
+  .stars{position:absolute;inset:0;z-index:1;pointer-events:none}
+  .star{position:absolute;border-radius:50%;background:#fff;opacity:.9;transform:translateZ(0);animation:twinkle 2.6s infinite ease-in-out}
+  @keyframes twinkle{0%,100%{opacity:.18}50%{opacity:1}}
+
+  /* Moon with subtle texture + halo */
+  .moon-wrap{position:absolute;right:6vw;top:8vh;z-index:20;pointer-events:none}
+  .moon{
+    width:220px;height:220px;border-radius:50%;
+    background:
+      radial-gradient(circle at 34% 32%, var(--moon-core) 0%, var(--moon-edge) 36%, rgba(255,200,140,0.06) 58%, transparent 100%),
+      linear-gradient(rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+    box-shadow:0 0 46px 12px rgba(255,200,140,0.12), 0 0 140px 36px rgba(255,160,40,0.03);
+    filter: drop-shadow(0 0 30px rgba(255,200,140,0.08));
+    position:relative;
+  }
+  .moon::after{content:"";position:absolute;inset:6% 6% 10% 6%;border-radius:50%;background:
+    radial-gradient(circle at 30% 28%, rgba(0,0,0,0.04) 0 6%, transparent 7%),
+    radial-gradient(circle at 64% 62%, rgba(0,0,0,0.03) 0 6%, transparent 7%);mix-blend-mode:multiply}
+  .moon-halo{position:absolute;left:-40%;top:-40%;width:180%;height:180%;border-radius:50%;filter:blur(22px);background:radial-gradient(circle, rgba(255,220,150,0.08), rgba(255,190,80,0.02) 40%, transparent 60%);mix-blend-mode:screen;pointer-events:none}
+
+  /* Clouds (wispy) */
+  .cloud{position:absolute;left:-40%;width:260%;height:200px;top:6vh;background:
+    radial-gradient(40% 60% at 8% 60%, rgba(255,255,255,0.06), transparent 40%),
+    radial-gradient(30% 60% at 44% 50%, rgba(255,255,255,0.05), transparent 42%),
+    radial-gradient(30% 60% at 70% 45%, rgba(255,255,255,0.04), transparent 40%);
+    filter: blur(18px); opacity:.46; z-index:18; pointer-events:none; animation:clouds 82s linear infinite }
+  .cloud.c2{top:14vh;opacity:.34;animation-duration:108s;filter:blur(22px)}
+  .cloud.c3{top:2vh;opacity:.28;animation-duration:92s;filter:blur(14px)}
+  @keyframes clouds{0%{transform:translateX(-100%)}100%{transform:translateX(30%)}}
+
+  /* Fog */
+  .fog{position:absolute;left:-20%;width:140%;height:36vh;bottom:0;z-index:80;pointer-events:none;background:
+    linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.03) 24%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 80%, rgba(255,255,255,0) 100%);
+    filter: blur(14px); opacity:.66; mix-blend-mode:screen; animation:drift 26s ease-in-out infinite}
+  @keyframes drift{0%{transform:translateX(-6%)}50%{transform:translateX(6%)}100%{transform:translateX(-6%)}}
+
+  /* Road */
+  .road{position:absolute;left:0;right:0;height:14vh;bottom:0;z-index:95;background:linear-gradient(180deg,#141416,#0a0a0b);box-shadow:inset 0 8px 20px rgba(0,0,0,0.6)}
+
+  /* Grass/bushes over road */
+  .grass{position:absolute;left:0;right:0;bottom:4.2vh;height:8vh;z-index:97;pointer-events:none;
+    background:
+    radial-gradient(40% 20% at 8% 95%, rgba(11,95,42,0.7), transparent 12%),
+    radial-gradient(30% 18% at 28% 92%, rgba(6,64,34,0.6), transparent 12%),
+    radial-gradient(40% 22% at 60% 95%, rgba(8,60,32,0.65), transparent 12%) }
+
+  /* Row of houses - larger */
+  .street{position:absolute;left:0;right:0;bottom:6vh;z-index:100;display:flex;justify-content:center;gap:3.6vw;align-items:flex-end;padding:0 3vw}
+  .house-card{width:18.2vw;max-width:320px;min-width:140px;pointer-events:auto;transform-origin:bottom center;transition:transform .22s ease}
+  .house-card:hover{transform:translateY(-6px) scale(1.02)}
+
+  /* house window lights */
+  .win{fill:rgba(255,180,60,0.06)}
+  .win.on{animation:flicker 2.6s infinite;fill:rgba(255,200,100,0.95)}
+  @keyframes flicker{0%{opacity:.18}30%{opacity:1}45%{opacity:.35}70%{opacity:.9}100%{opacity:.18}}
+
+  /* Tree with green highlights */
+  .tree{position:absolute;left:8vw;bottom:12vh;z-index:99;width:13vw;max-width:300px;pointer-events:none;filter:drop-shadow(0 8px 20px rgba(0,0,0,0.6))}
+  .branch{transform-origin:30px 60px;animation:sway 5.8s ease-in-out infinite}
+  @keyframes sway{0%{transform:rotate(-1.8deg)}50%{transform:rotate(1.8deg)}100%{transform:rotate(-1.8deg)}}
+
+  /* Pumpkin styling (SVG) */
+  .pumpkin-btn{background:transparent;border:0;padding:0;cursor:pointer;display:block;width:120px;height:auto;transition:transform .12s ease;z-index:110}
+  .pumpkin-btn:active{transform:translateY(2px)}
+  /* pumpkin inner glow toggles opacity on #p-glow in SVG */
+
+  /* Plane + banner */
+  .plane-wrap{position:absolute;top:8vh;left:-30vw;width:360px;height:64px;z-index:160;pointer-events:none}
+  .plane-wrap.fly{animation:planeFly var(--fly-duration,16000ms) linear forwards}
+  @keyframes planeFly{0%{transform:translateX(-36vw) translateY(0) rotate(-4deg)}50%{transform:translateX(48vw) translateY(3vh) rotate(2deg)}100%{transform:translateX(130vw) translateY(-2vh) rotate(1deg)}}
+  .banner{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(90deg,#2b1d10,#14100a);color:var(--accent);padding:8px 10px;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.6),0 0 26px rgba(255,100,20,0.04) inset;font-family:monospace;font-weight:700}
+
+  /* Bats */
+  .bat{position:fixed;width:92px;height:56px;pointer-events:none;z-index:170;transform-origin:center}
+  @keyframes batAnim{0%{transform:translate(var(--sx),var(--sy)) scale(.6) rotate(0);opacity:0}10%{opacity:1}45%{transform:translate(calc(var(--sx)+28vw),calc(var(--sy)-18vh)) scale(1) rotate(10deg)}75%{transform:translate(calc(var(--sx)+64vw),calc(var(--sy)-6vh)) scale(.84) rotate(-12deg)}100%{transform:translate(calc(var(--sx)+110vw),calc(var(--sy)+0vh)) scale(.6) rotate(-30deg);opacity:0}}
+
+  /* Ghost / candy */
+  .ghost{position:absolute;width:120px;height:80px;z-index:210;pointer-events:none}
+  .ghost.fly{animation:ghostFly .9s cubic-bezier(.2,.9,.2,1) forwards}
+  @keyframes ghostFly{0%{transform:translateY(18vh) scale(.6);opacity:0}40%{opacity:1}100%{transform:translateY(6vh) scale(1);opacity:0}}
+  .candy{position:absolute;width:12px;height:12px;border-radius:3px;z-index:210;pointer-events:none;animation:candyFall 900ms ease-out forwards}
+  @keyframes candyFall{0%{transform:translateY(-8vh) rotate(0) scale(.8);opacity:1}100%{transform:translateY(12vh) rotate(360deg) scale(1);opacity:1}}
+
+  /* UI small touches */
+  .sr-only{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+  @media (max-width:900px){ .house-card{width:22vw} .pumpkin-btn{width:92px} .plane-wrap{width:260px} .banner{font-size:13px} }
+  @media (max-width:560px){ .house-card{width:34vw} .door-area{bottom:14vh} }
+  body.reduced .cloud, body.reduced .fog{animation-play-state:paused;opacity:.5}
+  body.reduced .bat{display:none}
+  body.reduced .house-card{transform:none}
+
+.fly-wrap {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  top: 80px;
+  left: 100%; /* start off screen */
+  animation: fly-left 15s linear infinite;
+}
+
+@keyframes fly-left {
+  0% { left: 100%; }
+  100% { left: -1200px; } /* moves the whole plane+banner offscreen */
+}
+
+.plane {
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 600px;
+  background: linear-gradient(90deg, #2c1a00, #5c3b00);
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 22px;
+  color: #fff1b8;
+  margin-left: 20px;
+
+  /* glow effect */
+  box-shadow: 0 0 25px #ffb84d, 0 0 50px #ff9933 inset;
+  text-shadow: 0 0 6px #fff1b8, 0 0 12px #ffcc66;
+}
+
+</style>
+</head>
+<body>
+  <div class="scene" role="main" aria-label="Trick-or-treat street with Halloween countdown">
+
+    <!-- Controls -->
+    <div class="controls" aria-hidden="false">
+      <label><input id="toggleInteractive" type="checkbox" checked> Interactive</label>
+      <label><input id="toggleMotion" type="checkbox"> Reduce motion</label>
+      <button id="resetBtn" aria-label="Reset scene">Reset</button>
+    </div>
+
+    <!-- Stars -->
+    <div class="stars" id="stars" aria-hidden="true"></div>
+
+    <!-- Moon -->
+    <div class="moon-wrap" aria-hidden="false" role="img" aria-label="Glowing moon">
+      <div class="moon" aria-hidden="true"></div>
+      <div class="moon-halo" aria-hidden="true"></div>
+    </div>
+
+    <!-- Clouds -->
+    <div class="cloud c1" aria-hidden="true"></div>
+    <div class="cloud c2" aria-hidden="true"></div>
+    <div class="cloud c3" aria-hidden="true"></div>
+
+<div class="fly-wrap">
+  <!-- Plane SVG -->
+  <svg class="plane" viewBox="0 0 120 50" width="120" height="50" aria-hidden="true">
+    <!-- Body -->
+    <rect x="20" y="20" width="80" height="10" fill="#666" stroke="#333" stroke-width="2"/>
+    <!-- Wings -->
+    <polygon points="40,20 60,5 80,20" fill="#999" stroke="#333" stroke-width="2"/>
+    <polygon points="40,30 60,45 80,30" fill="#999" stroke="#333" stroke-width="2"/>
+    <!-- Tail -->
+    <polygon points="100,20 110,25 100,30" fill="#666" stroke="#333" stroke-width="2"/>
+    <!-- Propeller -->
+    <line x1="20" y1="25" x2="10" y2="20" stroke="#222" stroke-width="3"/>
+    <line x1="20" y1="25" x2="10" y2="30" stroke="#222" stroke-width="3"/>
+  </svg>
+
+  <!-- Banner -->
+  <div class="banner">
+    <span id="bannerText">HALLOWEEN IN</span>
+    <span id="bannerCounter">--:--:--:--</span>
+  </div>
+</div>
+
+
+
+
+    <!-- Fog -->
+    <div class="fog" aria-hidden="true"></div>
+
+    <!-- Tree (greenish highlights) -->
+    <div class="tree" aria-hidden="true">
+      <svg viewBox="0 0 160 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g transform="translate(0,0)">
+          <path d="M78 220 Q74 190 84 160" stroke="#2b211a" stroke-width="6" fill="none"/>
+          <g class="branch" transform="translate(10,10)">
+            <path d="M40 220 C30 200 24 170 44 150 C26 136 18 110 38 96 C24 84 20 60 34 52" stroke="#0b0b0b" stroke-width="3" fill="none"/>
+            <path d="M56 220 C70 200 90 184 120 176 C110 160 132 150 128 130" stroke="#0b0b0b" stroke-width="3" fill="none"/>
+            <!-- green highlights -->
+            <ellipse cx="36" cy="92" rx="20" ry="10" fill="rgba(18,89,58,0.20)"></ellipse>
+            <ellipse cx="110" cy="130" rx="26" ry="12" fill="rgba(18,89,58,0.18)"></ellipse>
+            <ellipse cx="66" cy="62" rx="30" ry="14" fill="rgba(18,89,58,0.14)"></ellipse>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Street (houses row) -->
+    <div class="street" role="group" aria-label="Houses for trick or treat">
+      <!-- House A: Cozy with porch pumpkins -->
+      <div class="house-card" id="houseA" tabindex="0" aria-label="Cozy house with porch and pumpkins">
+        <svg viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg" role="img">
+          <rect x="0" y="220" width="220" height="40" fill="#050506"/>
+          <rect x="18" y="110" width="184" height="110" rx="6" fill="#2f2430"/>
+          <path d="M0 116 L110 30 L220 116 Z" fill="#191217"/>
+          <!-- door -->
+          <rect x="96" y="154" width="28" height="66" rx="3" fill="#0c0a0b" />
+          <!-- porch light -->
+          <circle cx="110" cy="142" r="6" fill="#ffd97a" />
+          <!-- windows -->
+          <rect x="34" y="124" width="30" height="28" class="win" />
+          <rect x="156" y="124" width="30" height="28" class="win on" />
+          <!-- porch pumpkins (SVG shapes; glow from JS) -->
+          <g id="pumpkinsA" transform="translate(36,200)">
+            <ellipse cx="12" cy="10" rx="12" ry="8" fill="#ff7a18"/>
+            <ellipse cx="44" cy="12" rx="14" ry="9" fill="#ff7a18"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- House B: Bay window + string lights -->
+      <div class="house-card" id="houseB" tabindex="0" aria-label="House with bay window and string lights">
+        <svg viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg" role="img">
+          <rect x="0" y="220" width="220" height="40" fill="#050506"/>
+          <rect x="8" y="116" width="204" height="114" rx="6" fill="#26323b"/>
+          <path d="M0 124 L110 34 L220 124 Z" fill="#141922"/>
+          <rect x="56" y="144" width="108" height="60" rx="3" fill="#0c0c0d"/>
+          <rect x="64" y="152" width="32" height="44" class="win on"/>
+          <rect x="124" y="152" width="32" height="44" class="win"/>
+          <!-- string lights -->
+          <g transform="translate(12,130)">
+            <circle cx="18" cy="-6" r="3" fill="#ff6a6a"/>
+            <circle cx="44" cy="-2" r="3" fill="#ffd76a"/>
+            <circle cx="72" cy="-6" r="3" fill="#6aff8a"/>
+            <circle cx="100" cy="-8" r="3" fill="#6ab2ff"/>
+            <circle cx="128" cy="-6" r="3" fill="#ff6ae6"/>
+            <circle cx="156" cy="-2" r="3" fill="#ffd76a"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- House C: Tall spooky (boarded window option) -->
+      <div class="house-card" id="houseC" tabindex="0" aria-label="Tall spooky house with attic light">
+        <svg viewBox="0 0 220 300" xmlns="http://www.w3.org/2000/svg" role="img">
+          <rect x="0" y="260" width="220" height="40" fill="#050506"/>
+          <rect x="38" y="100" width="144" height="160" rx="4" fill="#241b21"/>
+          <path d="M28 108 L110 30 L192 108 Z" fill="#0e0b0e"/>
+          <rect x="96" y="170" width="28" height="90" rx="3" fill="#070507" />
+          <rect x="74" y="132" width="18" height="22" class="win"/>
+          <rect x="128" y="132" width="18" height="22" class="win on"/>
+          <!-- cobweb -->
+          <path d="M64 110 C72 112 88 114 104 116" stroke="rgba(255,255,255,0.04)" stroke-width="1" fill="none"/>
+        </svg>
+      </div>
+
+      <!-- House D: Warm porch + candy bowl -->
+      <div class="house-card" id="houseD" tabindex="0" aria-label="House with warm porch and candy bowl">
+        <svg viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg" role="img">
+          <rect x="0" y="220" width="220" height="40" fill="#050506"/>
+          <rect x="18" y="120" width="184" height="100" rx="6" fill="#3a2f20"/>
+          <path d="M0 126 L110 46 L220 126 Z" fill="#1b150e"/>
+          <rect x="96" y="156" width="28" height="64" rx="3" fill="#0b0a08" />
+          <rect x="68" y="134" width="22" height="20" class="win"/>
+          <rect x="132" y="134" width="22" height="20" class="win on"/>
+          <g transform="translate(86,200)">
+            <ellipse cx="14" cy="6" rx="14" ry="6" fill="#2b1212"/>
+            <circle cx="10" cy="6" r="2" fill="#ffd76a"/>
+            <circle cx="18" cy="6" r="2" fill="#6aff8a"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Door area: pumpkin (SVG, transparent) -->
+    <div class="door-area" style="position:absolute;left:50%;bottom:12vh;transform:translateX(-4%);z-index:110;pointer-events:none">
+      <button class="pumpkin-btn" id="pumpkinBtn" aria-pressed="false" aria-label="Jack-o-lantern on doorstep" style="pointer-events:auto">
+        <svg viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="false">
+          <defs>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <ellipse cx="60" cy="72" rx="42" ry="30" fill="#ff7a18"/>
+          <ellipse cx="60" cy="72" rx="34" ry="24" fill="#ff8f33" opacity="0.75"/>
+          <path d="M30 72 Q36 50 60 58 Q84 50 90 72 Q60 102 30 72Z" fill="#ff6a00" opacity="0.12"/>
+          <path d="M56 34 C54 28 66 28 64 34 L64 40 C62 42 58 42 56 40 Z" fill="#2b2b2b"/>
+          <g id="p-face" fill="#111">
+            <polygon id="p-eyeL" points="44,62 52,54 50,68"/>
+            <polygon id="p-eyeR" points="76,62 68,54 70,68"/>
+            <path id="p-mouth" d="M42 82 Q60 94 78 82 Q68 92 60 92 Q52 92 42 82Z"/>
+          </g>
+          <g id="p-glow" style="opacity:0" filter="url(#glow)">
+            <ellipse cx="52" cy="62" rx="10" ry="12" fill="#ffea7f"/>
+            <ellipse cx="68" cy="62" rx="10" ry="12" fill="#ffea7f"/>
+            <path d="M42 82 Q60 94 78 82 Q68 92 60 92 Q52 92 42 82Z" fill="#ffd57a"/>
+          </g>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bat trigger (right) -->
+    <div id="batTrigger" style="position:absolute;right:7vw;top:22vh;width:160px;height:140px;z-index:140;cursor:crosshair" tabindex="0" aria-label="Hover here to release bats"></div>
+
+    <!-- placeholder for ghost and candies -->
+    <div id="effects" style="position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:220"></div>
+
+    <!-- Road & grass -->
+    <div class="road" aria-hidden="true"></div>
+    <div class="grass" aria-hidden="true"></div>
+
+    <div class="sr-only">Interactive Halloween scene. Click houses for trick or treat. Use controls to toggle interactions or reduce motion.</div>
+  </div>
+
+<script>
+/* ============================
+   Utility helpers
+   ============================ */
+const $ = (s, c=document) => c.querySelector(s);
+const $$ = (s, c=document) => Array.from((c||document).querySelectorAll(s));
+
+/* ============================
+   Stars generator
+   ============================ */
+(function makeStars(){
+  const container = $('#stars');
+  const count = 140;
+  for(let i=0;i<count;i++){
+    const el = document.createElement('div');
+    el.className = 'star';
+    const size = (Math.random()*2.4)+0.6;
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    el.style.left = (Math.random()*100) + '%';
+    el.style.top = (Math.random()*46) + '%';
+    el.style.opacity = (0.2 + Math.random()*0.8);
+    el.style.animationDelay = (Math.random()*2) + 's';
+    container.appendChild(el);
+  }
+})();
+
+/* ============================
+   Countdown banner
+   ============================ */
+function nextHalloween(now=new Date()){
+  const y = now.getFullYear();
+  const thisH = new Date(y,9,31,0,0,0);
+  return now > thisH ? new Date(y+1,9,31,0,0,0) : thisH;
+}
+function pad(n){ return String(n).padStart(2,'0'); }
+function updateCountdown(){
+  const now = new Date();
+  const target = nextHalloween(now);
+  const diff = Math.max(0, target - now);
+   if (diff <= 0) {
+    // It's Halloween!
+    $('#bannerText').textContent = '';
+    $('#bannerCounter').textContent = "🎃 HAPPY HALLOWEEN! 🎃";
+    return;
+  }
+
+  const tot = Math.floor(diff/1000);
+  const days = Math.floor(tot/(24*3600));
+  const hrs = Math.floor((tot%(24*3600))/3600);
+  const mins = Math.floor((tot%3600)/60);
+  const secs = tot%60;
+  $('#bannerCounter').textContent = `${days}d:${String(hrs).padStart(2,'0')}h:${String(mins).padStart(2,'0')}m:${String(secs).padStart(2,'0')}s`;
+}
+updateCountdown();
+setInterval(updateCountdown, 1000);
+
+/* ============================
+   Plane movement: animate class to fly left->right
+   ============================ */
+const planeWrap = document.getElementById('planeWrap');
+const FLY_MS = 18000;
+function flyPlane(){
+  // set animation duration
+  planeWrap.style.setProperty('--fly-duration', FLY_MS + 'ms');
+  // restart animation
+  planeWrap.classList.remove('fly');
+  void planeWrap.offsetWidth;
+  planeWrap.classList.add('fly');
+}
+// start and repeat
+flyPlane();
+setInterval(flyPlane, 22000); // gap between flights
+
+/* ============================
+   Window lights randomization
+   ============================ */
+function randomWindows(){
+  const wins = $$('.win');
+  wins.forEach(w=> w.classList.remove('on'));
+  // ensure some houses have inviting lights
+  const forced = ['#houseA .win:nth-of-type(2)', '#houseD .win:nth-of-type(2)'];
+  // random selection
+  const n = 3 + Math.floor(Math.random()*4);
+  for(let i=0;i<n;i++){
+    const idx = Math.floor(Math.random()*wins.length);
+    wins[idx].classList.add('on');
+  }
+  forced.forEach(sel => { const el = document.querySelector(sel); if(el) el.classList.add('on'); });
+}
+randomWindows();
+setInterval(randomWindows, 4200);
+
+/* ============================
+   Pumpkin (glow on click, no teleport)
+   ============================ */
+const pumpkinBtn = $('#pumpkinBtn');
+let pumpkinLit = false;
+function setPumpkin(on){
+  pumpkinLit = !!on;
+  const glow = document.getElementById('p-glow');
+  const eyeL = document.getElementById('p-eyeL'); // not present; polygon IDs used earlier
+  // Use selectors inside the button SVG
+  const svg = pumpkinBtn.querySelector('svg');
+  const eyeLeft = svg.querySelector('#p-eyeL') || svg.querySelector('#p-eyeL'); // fallback
+  const eyeRight = svg.querySelector('#p-eyeR') || svg.querySelector('#p-eyeR');
+  const mouth = svg.querySelector('#p-mouth');
+  const pGlow = svg.querySelector('#p-glow');
+  if(pGlow) pGlow.style.opacity = pumpkinLit ? '1' : '0';
+  if(pumpkinLit){
+    if(eyeLeft) eyeLeft.setAttribute('points','46,60 52,52 50,66');
+    if(eyeRight) eyeRight.setAttribute('points','74,60 68,52 70,66');
+    if(mouth) mouth.setAttribute('d','M42 80 Q60 96 78 80 Q68 100 60 100 Q52 100 42 80Z');
+    pumpkinBtn.setAttribute('aria-pressed','true');
+    playGlow();
+  } else {
+    if(eyeLeft) eyeLeft.setAttribute('points','44,62 52,54 50,68');
+    if(eyeRight) eyeRight.setAttribute('points','76,62 68,54 70,68');
+    if(mouth) mouth.setAttribute('d','M42 82 Q60 94 78 82 Q68 92 60 92 Q52 92 42 82Z');
+    pumpkinBtn.setAttribute('aria-pressed','false');
+  }
+}
+pumpkinBtn.addEventListener('click', e => { e.stopPropagation(); setPumpkin(!pumpkinLit); });
+pumpkinBtn.addEventListener('keydown', e => { if(e.key==='Enter' || e.key===' ') { e.preventDefault(); setPumpkin(!pumpkinLit); } });
+
+/* ============================
+   Bats - spawn on hover; ambient patrols
+   ============================ */
+const batTrigger = $('#batTrigger');
+function createBat(startX, startY){
+  const bat = document.createElement('div');
+  bat.className = 'bat';
+  const sx = (startX / window.innerWidth) * 100;
+  const sy = (startY / window.innerHeight) * 100;
+  bat.style.setProperty('--sx', sx + 'vw');
+  bat.style.setProperty('--sy', sy + 'vh');
+  const dur = 6500 + Math.random()*4200;
+  bat.style.animation = `batAnim ${dur}ms linear forwards`;
+  bat.innerHTML = `<svg viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(0,8)"><path d="M0 56 C28 32 56 18 92 26 C124 16 156 16 196 40 C172 22 148 18 112 28 C84 36 80 56 60 72 C36 90 8 84 0 56 Z" fill="#0d0d0d"/></g></svg>`;
+  document.body.appendChild(bat);
+  setTimeout(()=> bat.remove(), dur + 240);
+}
+function spawnSwarm(){
+  const rect = batTrigger.getBoundingClientRect();
+  const baseX = rect.left + rect.width/2;
+  const baseY = rect.top + rect.height/2;
+  const swarm = 3 + Math.floor(Math.random()*4);
+  for(let i=0;i<swarm;i++){
+    setTimeout(()=> createBat(baseX + (Math.random()*80 - 40), baseY + (Math.random()*40 - 20)), i*160);
+  }
+  playFlap();
+}
+batTrigger.addEventListener('mouseenter', spawnSwarm);
+batTrigger.addEventListener('focus', spawnSwarm);
+batTrigger.addEventListener('click', spawnSwarm);
+batTrigger.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); spawnSwarm(); } });
+
+let ambientBats = setInterval(()=> { if(document.body.classList.contains('reduced')) return; createBat(-80 + Math.random()*40, 60 + Math.random()*30); }, 15000);
+
+/* ============================
+   Trick or Treat: click a house for random outcome
+   - Treat: candy confetti + chime
+   - Trick: ghost swoop + laugh
+   ============================ */
+const houses = $$('.house-card');
+const effects = $('#effects');
+
+function spawnCandies(x,y){
+  const colors = ['#ff6a6a','#ffd76a','#6aff8a','#6ab2ff','#ff6ae6'];
+  for(let i=0;i<12;i++){
+    const c = document.createElement('div');
+    c.className = 'candy';
+    c.style.left = (x + (Math.random()*80 - 40)) + 'px';
+    c.style.top = (y - 60 + (Math.random()*40 - 20)) + 'px';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    effects.appendChild(c);
+    setTimeout(()=> c.remove(), 1400 + Math.random()*800);
+  }
+  playChime();
+}
+
+function spawnGhost(x,y){
+  const g = document.createElement('div');
+  g.className = 'ghost';
+  g.style.left = (x - 40) + 'px';
+  g.style.top = (y - 30) + 'px';
+  g.innerHTML = `<svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><path d="M10 60 Q20 50 30 60 T50 60 T70 60 T90 60 Q100 40 95 26 Q80 10 60 8 Q42 10 28 26 Q22 44 10 60z" opacity="0.98"/><circle cx="46" cy="34" r="3" fill="#111"/><circle cx="74" cy="34" r="3" fill="#111"/></g></svg>`;
+  effects.appendChild(g);
+  requestAnimationFrame(()=> g.classList.add('fly'));
+  playLaugh();
+  setTimeout(()=> g.remove(), 1200);
+}
+
+function onHouseClick(e){
+  const rect = e.currentTarget.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  const roll = Math.random();
+  if(roll < 0.62) spawnCandies(cx, cy); else spawnGhost(cx, cy);
+}
+houses.forEach(h=>{
+  h.addEventListener('click', onHouseClick);
+  h.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); onHouseClick({currentTarget:h}); } });
+  h.addEventListener('mouseenter', ()=> {
+    const localWins = h.querySelectorAll('.win');
+    localWins.forEach((w,i)=> { setTimeout(()=> w.classList.add('on'), i*60); setTimeout(()=> w.classList.remove('on'), 750 + i*120); });
+    playCreak();
+  });
+});
+
+/* ============================
+   WebAudio for sounds (no external files)
+   ============================ */
+let audioCtx = null;
+function ensureAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+function playChime(){
+  ensureAudio();
+  const ctx = audioCtx;
+  const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+  o1.type='sine'; o2.type='sine'; o1.frequency.value=880; o2.frequency.value=660;
+  o1.connect(g); o2.connect(g); g.connect(ctx.destination);
+  const now = ctx.currentTime;
+  g.gain.setValueAtTime(0, now);
+  o1.start(now); o2.start(now);
+  g.gain.linearRampToValueAtTime(0.06, now+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, now+0.8);
+  o1.stop(now+0.9); o2.stop(now+0.9);
+}
+function playLaugh(){
+  ensureAudio();
+  const ctx = audioCtx;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type='sawtooth'; o.frequency.value = 240;
+  o.connect(g); g.connect(ctx.destination);
+  const now = ctx.currentTime;
+  g.gain.setValueAtTime(0, now);
+  o.start(now);
+  g.gain.linearRampToValueAtTime(0.18, now+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, now+0.6);
+  o.stop(now+0.6);
+}
+function playCreak(){
+  ensureAudio();
+  const ctx = audioCtx;
+  const o = ctx.createOscillator(), g = ctx.createGain(), filt = ctx.createBiquadFilter();
+  filt.type='lowpass'; filt.frequency.value = 1100;
+  o.type='sawtooth'; o.frequency.value = 120 + Math.random()*40;
+  o.connect(filt); filt.connect(g); g.connect(ctx.destination);
+  const now = ctx.currentTime;
+  g.gain.setValueAtTime(0, now);
+  o.start(now);
+  g.gain.linearRampToValueAtTime(0.45, now+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, now+0.9);
+  o.frequency.exponentialRampToValueAtTime(45, now+0.9);
+  o.stop(now+1.0);
+}
+function playGlow(){
+  ensureAudio();
+  const ctx = audioCtx;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type='sine'; o.frequency.value = 240 + Math.random()*24;
+  o.connect(g); g.connect(ctx.destination);
+  const now = ctx.currentTime;
+  o.start(now); g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(0.03, now+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, now+0.9);
+  o.stop(now+1.0);
+}
+function playFlap(){
+  ensureAudio();
+  const ctx = audioCtx;
+  const bufSize = 2 * ctx.sampleRate;
+  const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufSize;i++) data[i] = Math.random()*2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buffer;
+  const filt = ctx.createBiquadFilter(); filt.type='bandpass'; filt.frequency.value = 1200 + Math.random()*900;
+  const g = ctx.createGain(); g.gain.value = 0.0001;
+  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+  src.start();
+  g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.18);
+  src.stop(ctx.currentTime + 0.22);
+}
+
+/* ============================
+   Controls: interactive + reduce motion
+   ============================ */
+const toggleInteractive = $('#toggleInteractive');
+const toggleMotion = $('#toggleMotion');
+const resetBtn = $('#resetBtn');
+
+toggleMotion.addEventListener('change', e => {
+  if(e.target.checked) document.body.classList.add('reduced'); else document.body.classList.remove('reduced');
+});
+
+function setInteractive(on){
+  if(!on){
+    document.body.classList.add('reduced');
+    batTrigger.removeEventListener('mouseenter', spawnSwarm);
+    batTrigger.removeEventListener('focus', spawnSwarm);
+    batTrigger.removeEventListener('click', spawnSwarm);
+    houses.forEach(h => h.style.pointerEvents = 'none');
+    pumpkinBtn.disabled = true;
+  } else {
+    document.body.classList.remove('reduced');
+    batTrigger.addEventListener('mouseenter', spawnSwarm);
+    batTrigger.addEventListener('focus', spawnSwarm);
+    batTrigger.addEventListener('click', spawnSwarm);
+    houses.forEach(h => h.style.pointerEvents = 'auto');
+    pumpkinBtn.disabled = false;
+  }
+}
+toggleInteractive.addEventListener('change', e => setInteractive(e.target.checked));
+resetBtn.addEventListener('click', ()=>{
+  toggleInteractive.checked = true;
+  toggleMotion.checked = false;
+  setInteractive(true);
+  document.body.classList.remove('reduced');
+  setPumpkinState(false);
+});
+
+/* helper used by reset */
+function setPumpkinState(on){ setPumpkinState = function(){} } // placeholder to avoid undefined in reset
+
+/* ============================
+   Accessibility / keyboard
+   ============================ */
+batTrigger.addEventListener('keydown', e => { if(e.key==='Enter' || e.key===' ') { e.preventDefault(); spawnSwarm(); } });
+houses.forEach(h=> h.addEventListener('keydown', e => { if(e.key==='Enter' || e.key===' ') { e.preventDefault(); onHouseClick({currentTarget:h}); } }));
+
+/* ============================
+   Expose some initial states (some windows lit)
+   ============================ */
+(function initialLights(){
+  const presets = ['#houseA .win:nth-of-type(2)', '#houseB .win:nth-of-type(1)', '#houseC .win:nth-of-type(2)', '#houseD .win:nth-of-type(2)'];
+  presets.forEach(sel => { const el = document.querySelector(sel); if(el) el.classList.add('on'); });
+})();
+
+/* cleanup ambient on unload */
+window.addEventListener('beforeunload', ()=> { clearInterval(ambientBats); });
+
+</script>
+</body>
+</html>
