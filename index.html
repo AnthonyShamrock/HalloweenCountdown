@@ -94,7 +94,13 @@
   .pumpkin-btn{background:transparent;border:0;padding:0;cursor:pointer;display:block;width:120px;height:auto;transition:transform .12s ease;z-index:110}
   .pumpkin-btn:active{transform:translateY(2px)}
   /* pumpkin inner glow toggles opacity on #p-glow in SVG */
-  
+
+  /* Plane + banner */
+  .plane-wrap{position:absolute;top:8vh;left:-30vw;width:360px;height:64px;z-index:160;pointer-events:none}
+  .plane-wrap.fly{animation:planeFly var(--fly-duration,16000ms) linear forwards}
+  @keyframes planeFly{0%{transform:translateX(-36vw) translateY(0) rotate(-4deg)}50%{transform:translateX(48vw) translateY(3vh) rotate(2deg)}100%{transform:translateX(130vw) translateY(-2vh) rotate(1deg)}}
+  .banner{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(90deg,#2b1d10,#14100a);color:var(--accent);padding:8px 10px;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.6),0 0 26px rgba(255,100,20,0.04) inset;font-family:monospace;font-weight:700}
+
   /* Bats */
   .bat{position:fixed;width:92px;height:56px;pointer-events:none;z-index:170;transform-origin:center}
   @keyframes batAnim{0%{transform:translate(var(--sx),var(--sy)) scale(.6) rotate(0);opacity:0}10%{opacity:1}45%{transform:translate(calc(var(--sx)+28vw),calc(var(--sy)-18vh)) scale(1) rotate(10deg)}75%{transform:translate(calc(var(--sx)+64vw),calc(var(--sy)-6vh)) scale(.84) rotate(-12deg)}100%{transform:translate(calc(var(--sx)+110vw),calc(var(--sy)+0vh)) scale(.6) rotate(-30deg);opacity:0}}
@@ -389,10 +395,27 @@ function updateCountdown(){
   const hrs = Math.floor((tot%(24*3600))/3600);
   const mins = Math.floor((tot%3600)/60);
   const secs = tot%60;
-  $('#bannerCounter').textContent = `${days}d:${String(hrs).padStart(2,'0')}h:${String(mins).padStart(2,'0')}m:${String(secs).padStart(2,'0')}s`;
+  $('#bannerCounter').textContent = ` ${days}d:${String(hrs).padStart(2,'0')}h:${String(mins).padStart(2,'0')}m:${String(secs).padStart(2,'0')}s`;
 }
 updateCountdown();
 setInterval(updateCountdown, 1000);
+
+/* ============================
+   Plane movement: animate class to fly left->right
+   ============================ */
+const planeWrap = document.getElementById('planeWrap');
+const FLY_MS = 18000;
+function flyPlane(){
+  // set animation duration
+  planeWrap.style.setProperty('--fly-duration', FLY_MS + 'ms');
+  // restart animation
+  planeWrap.classList.remove('fly');
+  void planeWrap.offsetWidth;
+  planeWrap.classList.add('fly');
+}
+// start and repeat
+flyPlane();
+setInterval(flyPlane, 22000); // gap between flights
 
 /* ============================
    Window lights randomization
